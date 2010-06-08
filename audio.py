@@ -5,8 +5,9 @@ import threading
 
 gobject.threads_init()
 
-class AudioRecorder:
+class AudioRecorder(threading.Thread):
     def __init__(self,fn):
+        threading.Thread.__init__(self)
         self.fn = fn
         self.source = gst.element_factory_make("alsasrc")
 

@@ -46,8 +46,8 @@ class MovementSource:
     def __del__(self):
         self.ifile.close()
 
-accelerator1 = MovementSensor("/dev/input/event2","/sys/class/i2c-adapter/i2c-0/0-0073/spi_s3c24xx_gpio.0/spi3.0")
-accelerator2 = MovementSensor("/dev/input/event3","/sys/class/i2c-adapter/i2c-0/0-0073/spi_s3c24xx_gpio.0/spi3.1")
+accelerator1 = MovementSensor("/dev/input/event3","/sys/class/i2c-adapter/i2c-0/0-0073/spi_s3c24xx_gpio.0/spi3.0")
+accelerator2 = MovementSensor("/dev/input/event4","/sys/class/i2c-adapter/i2c-0/0-0073/spi_s3c24xx_gpio.0/spi3.1")
 
 
 class MovementReader(threading.Thread):
@@ -62,8 +62,7 @@ class MovementReader(threading.Thread):
         while self.running:
             (t1,x1,y1,z1) = self.src1.next()
             (t2,x2,y2,z2) = self.src2.next()
-            self.trg.write("%f\t%d\t%d\t%d\t%d\t%d\t%d\n" % (t1, x1, x2, y1, y2, z1, z2))
+            self.trg.write("%f\t%d\t%d\t%d\t%d\t%d\t%d\n" % (t1, x1, y1, z1, x2, y2, z2))
+        self.trg.close()
     def stop(self):
         self.running = False
-        
-        

@@ -7,11 +7,15 @@ import subprocess
 import gtk
 import gobject
 import datetime
+import dateutil.tz as tz
 import time
-
+import annpkg.sources
+import annpkg.model
+import os
 
 class Main(gtk.Window):
     def __init__(self):
+        gobject.threads_init()
         profiles = ["Walking","Profile 2"]
         gtk.Window.__init__(self)
         self.set_title("Recorder")
@@ -55,9 +59,11 @@ class Main(gtk.Window):
     def toggle_recording(self):
         if self.task_audio is None:
             self.button_rec.set_label("Stop")
-            tm = datetime.datetime.now()
-            self.task_audio = audio.AudioRecorder(tm.strftime("recording-%Y-%m-%d-%H:%M:%S.wav"))
-            self.task_movement = movement.MovementReader(tm.strftime("movement-%Y-%m-%d-%H:%M:%S"))
+            self.tm = datetime.datetime.utcnow()
+            self.file_audio = self.tm.strftime("audio-%Y-%m-%d-%H:%M:%S.wav")
+            self.file_acc = self.tm.strftime("acc-%Y-%m-%d-%H:%M:%S")
+            self.task_audio = audio.AudioRecorder(self.file_audio)
+            self.task_movement = movement.MovementReader(self.file_acc)
             self.task_audio.run()
             self.task_movement.start()
         else:
@@ -67,9 +73,14 @@ class Main(gtk.Window):
             self.task_movement.join()
             self.task_audio = None
             self.task_movement = None
-
+            src_acc = annpkg.sources.MovementSource.from_file(self.file_acc,"m",(0,1))
+            src_aud = annpkg.sources.AudioSource.from_file(self.file_audio,"aud",(0,1),self.tm)
+            pkg = annpkg.model.AnnPkg([ (src,None) for src in src_acc+src_aud ],[])
+            pkg.write(self.tm.strftime("recording-%Y-%m-%d-%H:%M:%S.tar"))
+            os.remove(self.file_acc)
+            os.remove(self.file_audio)
     def run(self):
-        #subprocess.call(["/usr/sbin/alsactl","restore","-f","/usr/share/openmoko/scenarios/voip-handset.state"])
+        subprocess.call(["/usr/sbin/alsactl","restore","-f","/usr/share/openmoko/scenarios/voip-handset.state"])
         gtk.main()
 
 
